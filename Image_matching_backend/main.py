@@ -1,6 +1,5 @@
 from fastapi import FastAPI, Form, File, UploadFile
 from typing import List
-from fastapi.staticfiles import StaticFiles
 import uvicorn
 import numpy as np  
 from fastapi.middleware.cors import CORSMiddleware
@@ -95,7 +94,7 @@ async def store_user_images(user_id: str = Form(...), images: List[UploadFile] =
         return {"error": str(e)}
 
 @app.post("/find-missing")
-async def find_missing_child(image: UploadFile = File(...)):
+async def find_missing_child(user_id: str = Form(...), image: UploadFile = File(...)):
     """Searches for a missing child using facial similarity."""
     embedding = await generate_embeddings(image)
 
@@ -110,7 +109,7 @@ async def find_missing_child(image: UploadFile = File(...)):
             return {"message": "Child found", "user_id": user_id, "similarity_score": match["score"]}
     
     # If no match found or similarity below threshold, store embedding in 'unconfirmed' namespace
-    index.upsert([(str(uuid.uuid4()), embedding)], namespace="unconfirmed")
+    index.upsert([(user_id, embedding)], namespace="unconfirmed")
     return {"message": "No match found, stored for future cases"}
    
    
